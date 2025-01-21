@@ -81,14 +81,14 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/home/yourusername/chat-application/chatproject/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
-    "http://your-frontend-domain.com",
+    "https://python-chat-app.vercel.app",
 ]
 
 CHANNEL_LAYERS = {
