@@ -7,7 +7,7 @@ SECRET_KEY = 'your-secret-key'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['your-pythonanywhere-domain.com']
+ALLOWED_HOSTS = ['https://shibbu57680.pythonanywhere.com/']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
