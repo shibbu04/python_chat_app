@@ -22,14 +22,11 @@ function LeftMenu({ isOpen }) {
           headers: {
             'Authorization': `Token ${token}`,
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
           },
-          credentials: 'include',
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch users');
+          throw new Error('Failed to fetch users');
         }
 
         const data = await response.json();
