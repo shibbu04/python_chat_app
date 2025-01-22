@@ -21,12 +21,15 @@ function LeftMenu({ isOpen }) {
         const response = await fetch(`${API_URL}/api/users/`, {
           headers: {
             'Authorization': `Token ${token}`,
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch users');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch users');
         }
 
         const data = await response.json();
@@ -39,7 +42,9 @@ function LeftMenu({ isOpen }) {
       }
     };
 
-    fetchUsers();
+    if (localStorage.getItem('token')) {
+      fetchUsers();
+    }
   }, [API_URL]);
 
   return (
