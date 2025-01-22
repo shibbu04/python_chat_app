@@ -21,21 +21,24 @@ function Navbar() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Login failed');
       }
 
+      const data = await response.json();
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       setIsLoggedIn(true);
       setUsername('');
       setPassword('');
+      window.location.reload(); // Reload to update all components
     } catch (error) {
       setError(error.message);
       console.error('Login error:', error);
