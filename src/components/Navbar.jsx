@@ -21,24 +21,22 @@ function Navbar() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Login failed');
+        throw new Error(data.error || 'Login failed');
       }
 
-      const data = await response.json();
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       setIsLoggedIn(true);
       setUsername('');
       setPassword('');
-      window.location.reload(); // Reload to update all components
+      window.location.reload();
     } catch (error) {
       setError(error.message);
       console.error('Login error:', error);
@@ -52,6 +50,7 @@ function Navbar() {
     localStorage.removeItem('user');
     setIsLoggedIn(false);
     setShowMobileMenu(false);
+    window.location.reload();
   };
 
   return (
@@ -65,7 +64,6 @@ function Navbar() {
           </div>
         </div>
 
-        {/* Mobile menu button */}
         <button
           className="md:hidden text-white focus:outline-none"
           onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -73,7 +71,6 @@ function Navbar() {
           <FaBars className="h-6 w-6" />
         </button>
 
-        {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6">
           {isLoggedIn ? (
             <>
@@ -104,6 +101,7 @@ function Navbar() {
                 placeholder="Username"
                 className="auth-input"
                 disabled={loading}
+                required
               />
               <input
                 type="password"
@@ -112,6 +110,7 @@ function Navbar() {
                 placeholder="Password"
                 className="auth-input"
                 disabled={loading}
+                required
               />
               <button
                 type="submit"
@@ -124,7 +123,6 @@ function Navbar() {
           )}
         </div>
 
-        {/* Mobile menu */}
         {showMobileMenu && (
           <div className="absolute top-16 left-0 right-0 bg-indigo-600 md:hidden">
             <div className="px-4 py-2 space-y-2">
@@ -157,6 +155,7 @@ function Navbar() {
                     placeholder="Username"
                     className="mobile-auth-input"
                     disabled={loading}
+                    required
                   />
                   <input
                     type="password"
@@ -165,6 +164,7 @@ function Navbar() {
                     placeholder="Password"
                     className="mobile-auth-input"
                     disabled={loading}
+                    required
                   />
                   <button
                     type="submit"
