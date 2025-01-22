@@ -7,7 +7,13 @@ function MainContent() {
   const [messages, setMessages] = useState([]);
   const [sum, setSum] = useState(null);
   const [numbers, setNumbers] = useState({ num1: '', num2: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const API_URL = import.meta.env.VITE_API_URL;
+  const AWS_API_URL = import.meta.env.VITE_AWS_API_URL;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -18,15 +24,32 @@ function MainContent() {
   }, [messages]);
 
   const handleAddNumbers = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const response = await fetch('your-api-gateway-url/add', {
+      const response = await fetch(`${AWS_API_URL}/add`, {
         method: 'POST',
-        body: JSON.stringify(numbers),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          num1: parseFloat(numbers.num1),
+          num2: parseFloat(numbers.num2)
+        })
       });
+      
       const data = await response.json();
-      setSum(data.result);
+      
+      if (data.success) {
+        setSum(data.result);
+      } else {
+        throw new Error(data.error || 'Failed to add numbers');
+      }
     } catch (error) {
+      setError(error.message);
       console.error('Error adding numbers:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -34,23 +57,48 @@ function MainContent() {
     const file = event.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-      try {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      
+      reader.onload = async () => {
         const base64Content = reader.result.split(',')[1];
-        await fetch('your-api-gateway-url/upload', {
+        
+        const response = await fetch(`${AWS_API_URL}/upload`, {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({
             fileContent: base64Content,
             fileName: file.name
-          }),
+          })
         });
-        alert('File uploaded successfully!');
-      } catch (error) {
-        console.error('Error uploading file:', error);
+
+        const data = await response.json();
+        
+        if (data.success) {
+          alert(`File uploaded successfully! URL: ${data.file_url}`);
+        } else {
+          throw new Error(data.error || 'Failed to upload file');
+        }
+      };
+
+      reader.onerror = () => {
+        throw new Error('Failed to read file');
+      };
+    } catch (error) {
+      setError(error.message);
+      console.error('Error uploading file:', error);
+    } finally {
+      setIsLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-    };
+    }
   };
 
   return (
@@ -117,6 +165,12 @@ function MainContent() {
             <h2 className="text-2xl font-bold text-gray-800">AWS Lambda Functions</h2>
           </div>
           <div className="p-6 space-y-6">
+            {error && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+                {error}
+              </div>
+            )}
+            
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
                 <FaCalculator />
@@ -129,6 +183,7 @@ function MainContent() {
                   onChange={(e) => setNumbers(prev => ({ ...prev, num1: e.target.value }))}
                   className="flex-grow px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   placeholder="First number"
+                  disabled={isLoading}
                 />
                 <input
                   type="number"
@@ -136,12 +191,16 @@ function MainContent() {
                   onChange={(e) => setNumbers(prev => ({ ...prev, num2: e.target.value }))}
                   className="flex-grow px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   placeholder="Second number"
+                  disabled={isLoading}
                 />
                 <button
                   onClick={handleAddNumbers}
-                  className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors duration-200"
+                  className={`bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors duration-200 ${
+                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={isLoading}
                 >
-                  Add
+                  {isLoading ? 'Adding...' : 'Add'}
                 </button>
               </div>
               {sum !== null && (
@@ -161,7 +220,10 @@ function MainContent() {
                   type="file"
                   onChange={handleFileUpload}
                   className="flex-grow px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  disabled={isLoading}
+                  ref={fileInputRef}
                 />
+                {isLoading && <span className="text-gray-600">Uploading...</span>}
               </div>
             </div>
           </div>
